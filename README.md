@@ -13,7 +13,8 @@ python-path
 ├── a1/
 |  └── a1.py
 ├── base/
-|  └── b1.py
+|  ├── b1.py
+|  └── hello_b1.txt
 ├── LICENSE
 ├── main.py
 └── README.md
@@ -40,6 +41,8 @@ from a1.a1 import hello_a1
 
 def main() -> str:
     print(hello_a1('main'))
+    with open('base/hello_b1.txt', mode='r', encoding='utf8') as f:
+        print(f.read())
 
 
 if __name__ == '__main__':
@@ -50,16 +53,19 @@ if __name__ == '__main__':
 ``` python
 $ python main.py
 hello main => a1 => b1
+hello file b1
 ```
 
 ## 2 main在文件夹内
 ### 2.1 main.py在文件夹内,依赖文件夹也在文件夹内
-把依赖文件夹目录, 添加到系统路径
+1. 把依赖文件夹目录, 添加到系统路径
+2. 如果要访问文件, 需要设置工作空间`os.chdir`
 ``` python
 python-path
 ├── a2/
 |  ├── base/
-|  |  └── b2.py
+|  |  ├── b2.py
+|  |  └── hello_b2.py
 |  └── main.py
 ├── LICENSE
 └── README.md
@@ -74,28 +80,34 @@ def hello(name: str) -> str:
 main.py
 ``` python
 import os
+import sys
 
 from base.b2 import hello
 
 
 def main() -> str:
     print(hello('b2'))
+    with open('base/hello_b2.txt',mode='r',encoding='utf8') as f:
+        print(f.read())
 
 
 if __name__ == '__main__':
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    p = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, p)
+    os.chdir(p)
     main()
 
 ```
 
 ### 2.2 main.py在文件夹内,依赖文件夹在根目录
-把依赖文件夹目录, 添加到系统路径
+把依赖文件夹目录, 添加到系统路径, 可以正常访问文件
 ``` python
 python-path
 ├── a3/
 |  └── main.py
 ├── base/
-|  └── b1.py
+|  ├── b1.py
+|  └── hello_b1.txt
 ├── LICENSE
 └── README.md
 
@@ -115,6 +127,8 @@ import sys
 
 def main():
     print(hello('a2'))
+    with open('base/hello_b1.txt',mode='r',encoding='utf8') as f:
+        print(f.read())
 
 
 if __name__ == '__main__':
@@ -130,7 +144,8 @@ if __name__ == '__main__':
 ``` python
 python-path
 ├── base/
-|  └── b1.py
+|  ├── b1.py
+|  └── hello_b1.txt
 ├── LICENSE
 ├── README.md
 └── tests/
@@ -159,10 +174,19 @@ from base.b1 import hello
 
 def test_hello():
     print(1)
-    assert 'hello test' == hello('test'),'test error'
+    assert 'hello test => b1' == hello('test'), 'test error'
+
+def test_file():
+    with open('base/hello_b1.txt', mode='r', encoding='utf8') as f:
+        assert 'hello file b1' == f.read(), 'file error'
+
 ```
 运行
 ``` python
 $ py.test.exe -vs .\tests\test_base.py
+collected 2 items
+
+tests/test_base.py::test_hello 1
 PASSED
+tests/test_base.py::test_file PASSED
 ```
